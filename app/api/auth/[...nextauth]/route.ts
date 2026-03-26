@@ -12,13 +12,9 @@ const supabaseAdmin =
     ? createClient(supabaseUrl, supabaseServiceRole)
     : null;
 
-const useSecureCookies = process.env.NEXTAUTH_URL?.startsWith("https://");
-const hostName = process.env.NEXTAUTH_URL
-  ? new URL(process.env.NEXTAUTH_URL).hostname
-  : "localhost";
-
 export const authOptions: NextAuthOptions = {
   debug: true,
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     LineProvider({
       clientId: process.env.LINE_CLIENT_ID as string,
@@ -27,49 +23,6 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: "/login",
-  },
-  // กำหนด Cookie config ให้ชัดเจน เพื่อแก้ปัญหา state mismatch บน Vercel
-  cookies: {
-    sessionToken: {
-      name: useSecureCookies ? `__Secure-next-auth.session-token` : `next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: !!useSecureCookies,
-        domain: undefined, // ไม่ระบุ domain ให้ browser จัดการเอง
-      },
-    },
-    callbackUrl: {
-      name: useSecureCookies ? `__Secure-next-auth.callback-url` : `next-auth.callback-url`,
-      options: {
-        sameSite: "lax",
-        path: "/",
-        secure: !!useSecureCookies,
-        domain: undefined,
-      },
-    },
-    csrfToken: {
-      name: useSecureCookies ? `__Host-next-auth.csrf-token` : `next-auth.csrf-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: !!useSecureCookies,
-        domain: undefined,
-      },
-    },
-    state: {
-      name: useSecureCookies ? `__Secure-next-auth.state` : `next-auth.state`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: !!useSecureCookies,
-        maxAge: 900, // 15 นาที
-        domain: undefined,
-      },
-    },
   },
   callbacks: {
     async signIn({ user, account }) {

@@ -271,7 +271,10 @@ export default function RegisterInfoPage() {
               {/* นามสกุล */}
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  นามสกุล <span className="text-slate-400 font-normal lowercase">(ไม่บังคับกรอก)</span>
+                  นามสกุล{" "}
+                  <span className="text-slate-400 font-normal lowercase">
+                    (ไม่บังคับกรอก)
+                  </span>
                 </label>
                 <input
                   type="text"
@@ -285,7 +288,10 @@ export default function RegisterInfoPage() {
               {/* เลขบัตรประชาชน */}
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  เลขประจำตัวประชาชน 13 หลัก <span className="text-slate-400 font-normal lowercase">(ไม่บังคับ)</span>
+                  เลขประจำตัวประชาชน 13 หลัก{" "}
+                  <span className="text-slate-400 font-normal lowercase">
+                    (ไม่บังคับ)
+                  </span>
                 </label>
                 <input
                   type="text"

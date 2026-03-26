@@ -7,7 +7,7 @@ import Image from "next/image";
 export default function LoginPage() {
   const handleLineLogin = () => {
     // ฟังก์ชันนี้จะเรียกใช้งาน NextAuth เพื่อวิ่งไปที่หน้าจออนุญาตของ LINE
-    signIn("line", { callbackUrl: "/citizen/tax-status" });
+    signIn("line", { callbackUrl: "/auth-redirect" });
   };
 
   return (

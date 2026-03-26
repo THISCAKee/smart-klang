@@ -14,8 +14,6 @@ const supabaseAdmin =
 export const authOptions: NextAuthOptions = {
   debug: true,
   secret: process.env.NEXTAUTH_SECRET,
-  // ⚠️ บรรทัดนี้สำคัญที่สุดสำหรับ Vercel: ให้ข้ามการเช็คโดเมนที่เข้มงวดเกินไป
-
   providers: [
     LineProvider({
       clientId: process.env.LINE_CLIENT_ID as string,
@@ -25,44 +23,65 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login",
   },
-  // ⚠️ ลบการตั้งค่า cookies: {...} ออกทั้งหมด ให้ NextAuth จัดการเองตามมาตรฐาน Vercel
-  // แต่เราจะใช้ตัวเลือกนี้แทน:
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 วัน
   },
   callbacks: {
+    // ⚠️ signIn ต้อง return true เสมอ เพื่อให้ session ถูกสร้างขึ้น
+    // ถ้า return string URL = "ปฏิเสธการ sign in" ทำให้ไม่มี session!
     async signIn({ user, account }) {
       if (account?.provider === "line") {
         try {
           if (!supabaseAdmin) {
             console.error("[NextAuth] Supabase Admin missing");
-            return true; // ยอมให้ผ่านไปก่อนแม้ไม่มี DB เพื่อกันหน้าขาว
+            return true;
           }
+          // ตรวจสอบว่ามี user ในระบบหรือยัง แล้วเก็บผลลัพธ์ไว้ที่ user object
           const { data, error } = await supabaseAdmin
             .from("users")
             .select("id")
             .eq("line_user_id", user.id)
             .maybeSingle();
 
-          if (!data || error) return "/register-info";
-          return "/citizen/select-year";
+          console.log("[NextAuth] signIn check:", { lineId: user.id, data, error });
+
+          // เก็บสถานะว่าลงทะเบียนแล้วหรือยังไว้ที่ user object
+          // เพื่อส่งต่อไป jwt callback
+          (user as any).isRegistered = !!(data && !error);
         } catch (err) {
-          console.error("SignIn Error:", err);
-          return "/register-info";
+          console.error("[NextAuth] SignIn Error:", err);
+          (user as any).isRegistered = false;
         }
       }
+      // ✅ return true เสมอ เพื่อให้ session ถูกสร้าง
       return true;
     },
+
+    async jwt({ token, user, account }) {
+      if (account) {
+        token.provider = account.provider;
+        // รับค่า isRegistered จาก signIn callback
+        token.isRegistered = (user as any)?.isRegistered ?? false;
+      }
+      return token;
+    },
+
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.sub as string;
+        (session.user as any).isRegistered = token.isRegistered ?? false;
       }
       return session;
     },
-    async jwt({ token, account }) {
-      if (account) token.provider = account.provider;
-      return token;
+
+    // ใช้ redirect callback เพื่อควบคุมว่า login เสร็จแล้วจะไปหน้าไหน
+    async redirect({ url, baseUrl }) {
+      // ถ้าเป็น relative URL ให้ต่อกับ baseUrl
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // ถ้าเป็น URL ของเราเอง ให้ผ่าน
+      if (url.startsWith(baseUrl)) return url;
+      return baseUrl;
     },
   },
 };

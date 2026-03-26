@@ -271,31 +271,29 @@ export default function RegisterInfoPage() {
               {/* นามสกุล */}
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  นามสกุล
+                  นามสกุล <span className="text-slate-400 font-normal lowercase">(ไม่บังคับกรอก)</span>
                 </label>
                 <input
                   type="text"
-                  required
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   className="text-black w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all"
+                  placeholder="ถ้ามี"
                 />
               </div>
 
               {/* เลขบัตรประชาชน */}
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  เลขประจำตัวประชาชน 13 หลัก
+                  เลขประจำตัวประชาชน 13 หลัก <span className="text-slate-400 font-normal lowercase">(ไม่บังคับ)</span>
                 </label>
                 <input
                   type="text"
-                  required
                   maxLength={13}
-                  pattern="\d{13}"
                   value={idCard}
                   onChange={(e) => setIdCard(e.target.value.replace(/\D/g, ""))}
                   className="text-black w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono tracking-widest focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all"
-                  placeholder="0 0000 00000 00 0"
+                  placeholder="0000000000000"
                 />
                 <p className="text-xs text-slate-400 mt-1.5">
                   ตัวเลข {idCard.length}/13 หลัก

@@ -57,6 +57,8 @@ export async function GET(req: Request) {
 
     let taxAmount = 0;
     let landPlots: any[] = []; // เตรียมตัวแปรเก็บรายการแปลงที่ดิน
+    let buildings: any[] = []; // เตรียมตัวแปรเก็บรายการสิ่งปลูกสร้าง
+    let signboards: any[] = []; // เตรียมตัวแปรเก็บรายการป้าย
 
     if (searchYear) {
       // 2. ดึงข้อมูลภาษีจากตาราง pa
@@ -71,6 +73,17 @@ export async function GET(req: Request) {
           (sum, item) => sum + (Number(item.pa_tax) || 0),
           0,
         );
+      }
+
+      // ดึงข้อมูลป้าย (signboard) กรองตามเจ้าของและปี
+      const { data: signData } = await supabaseAdmin
+        .from("signboard")
+        .select("s_name, s_desc, sign_type_id, sw, sl, no_side")
+        .eq("owner_id", user.id)
+        .eq("annual", searchYear);
+      
+      if (signData) {
+        signboards = signData;
       }
 
       // 3. ดึง lid ทั้งหมดจาก land_owner ของ owner นี้
@@ -106,6 +119,19 @@ export async function GET(req: Request) {
               y: item.y !== null ? String(item.y) : "0",
               w: item.w !== null ? String(item.w) : "0",
             }));
+
+            // ดึงข้อมูลสิ่งปลูกสร้าง (building) ที่เชื่อมกับ land (lid)
+            const activeLids = landData.map(item => item.lid).filter(Boolean);
+            if (activeLids.length > 0) {
+              const { data: buildingData } = await supabaseAdmin
+                .from("building")
+                .select("address, moo, b_type, b_material, no_floor, all_area, notes, ref_lid")
+                .in("ref_lid", activeLids);
+              
+              if (buildingData) {
+                buildings = buildingData;
+              }
+            }
           }
         }
       }
@@ -121,6 +147,8 @@ export async function GET(req: Request) {
       },
       taxAmount: taxAmount,
       landPlots: landPlots,
+      buildings: buildings,
+      signboards: signboards, // เพิ่มข้อมูลป้าย
       year: searchYear || "ไม่ระบุปี",
       availableYears: availableYears,
     });

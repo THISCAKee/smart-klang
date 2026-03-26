@@ -36,9 +36,15 @@ function TaxStatusContent() {
   } | null>(null);
   const [taxAmount, setTaxAmount] = useState<number>(0);
 
-  // เพิ่ม State สำหรับเก็บรายการแปลงที่ดิน
+  // เพิ่ม State สำหรับเก็บรายการแปลงที่ดิน และสิ่งปลูกสร้าง
   const [landPlots, setLandPlots] = useState<
     { line_no: string; ln: string; dn: string; sn: string; r: string; y: string; w: string }[]
+  >([]);
+  const [buildings, setBuildings] = useState<
+    { address: string; moo: string; b_type: string; b_material: string; no_floor: number; all_area: number; notes: string; ref_lid: any }[]
+  >([]);
+  const [signboards, setSignboards] = useState<
+    { s_name: string; s_desc: string; sign_type_id: string; sw: number; sl: number; no_side: number }[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -60,6 +66,8 @@ function TaxStatusContent() {
           setUserData(result.userData);
           setTaxAmount(result.taxAmount);
           setLandPlots(result.landPlots || []);
+          setBuildings(result.buildings || []);
+          setSignboards(result.signboards || []);
           if (result.year) {
             setDisplayYear(result.year);
             // ถ้ายังไม่ได้เลือกปีไว้ ให้ตั้งปีจาก API
@@ -346,6 +354,126 @@ function TaxStatusContent() {
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* ส่วนที่ 3: รายการสิ่งปลูกสร้าง */}
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+              </svg>
+            </div>
+            รายการสิ่งปลูกสร้าง
+          </h3>
+          <span className="bg-slate-200 text-slate-600 text-xs font-bold px-3.5 py-1.5 rounded-full">
+            {buildings.length} รายการ
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          {buildings.length > 0 ? (
+            <table className="w-full text-left border-collapse min-w-[800px]">
+              <thead>
+                <tr className="bg-slate-50/50">
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">บ้านเลขที่</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">หมู่</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">ประเภท (กรมธนารักษ์)</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">ลักษณะ</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center">ชั้น</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-right">เนื้อที่ (ตร.ม.)</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">หมายเหตุ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {buildings.map((b, i) => (
+                  <tr key={i} className="hover:bg-slate-50 transition-colors group">
+                    <td className="px-6 py-4 text-sm font-bold text-slate-800">{b.address || "-"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{b.moo || "-"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">
+                      <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium">{b.b_type || "-"}</span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{b.b_material || "-"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600 text-center">{b.no_floor || "1"}</td>
+                    <td className="px-6 py-4 text-sm font-semibold text-indigo-600 text-right">
+                      {new Intl.NumberFormat("th-TH", { minimumFractionDigits: 2 }).format(b.all_area || 0)}
+                    </td>
+                    <td className="px-6 py-4 text-xs text-slate-400 italic">{b.notes || "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+              <svg className="w-12 h-12 mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+              </svg>
+              <p className="text-sm font-medium">ไม่พบข้อมูลสิ่งปลูกสร้างในปีที่เลือก</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ส่วนที่ 4: รายการป้าย (ภาษีป้าย) */}
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+              </svg>
+            </div>
+            รายการป้าย (ภาษีป้าย)
+          </h3>
+          <span className="bg-slate-200 text-slate-600 text-xs font-bold px-3.5 py-1.5 rounded-full">
+            {signboards.length} รายการ
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          {signboards.length > 0 ? (
+            <table className="w-full text-left border-collapse min-w-[800px]">
+              <thead>
+                <tr className="bg-slate-50/50">
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">ชื่อกิจการ</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">ข้อความในป้าย</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center">ประเภทป้าย</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center">ขนาด (กว้าง x ยาว)</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center">จำนวนด้าน</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {signboards.map((s, i) => (
+                  <tr key={i} className="hover:bg-slate-50 transition-colors group">
+                    <td className="px-6 py-4 text-sm font-bold text-slate-800">{s.s_name || "-"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600 leading-relaxed max-w-xs">{s.s_desc || "-"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600 text-center">
+                      <span className="bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg text-xs font-semibold border border-amber-100">
+                        ประเภท {s.sign_type_id || "-"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-700 text-center font-mono italic">
+                      {s.sw || 0} x {s.sl || 0} ซม.
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600 text-center">
+                      <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 font-bold text-xs">
+                        {s.no_side || 1}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+              <svg className="w-12 h-12 mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+              </svg>
+              <p className="text-sm font-medium">ไม่พบข้อมูลป้ายในปีที่เลือก</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

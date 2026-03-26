@@ -13,28 +13,43 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { lineUserId, prefix, firstName, lastName, idCard } = body;
 
-    // 1. ค้นหา owner_id จากตาราง owner โดยเทียบ ชื่อ และ นามสกุล
-    // (หมายเหตุ: สมมติว่าในตาราง owner ของคุณมีคอลัมน์ชื่อ fname และ lname นะครับ)
-    const { data: ownerData, error: ownerError } = await supabaseAdmin
+    // 1. ค้นหา owner_id จากตาราง owner โดยเทียบ ชื่อ (และ นามสกุล ถ้ามีการกรอกมา)
+    let query = supabaseAdmin
       .from("owner")
       .select("owner_id")
-      .eq("fname", firstName)
-      .eq("lname", lastName)
-      .maybeSingle(); // ใช้ maybeSingle() เพราะอาจจะไม่เจอข้อมูลก็ได้
+      .eq("fname", firstName);
+    
+    // ถ้านามสกุลถูกกรอกมาให้ใช้กรองด้วย
+    if (lastName && lastName.trim() !== "") {
+      query = query.eq("lname", lastName);
+    }
+
+    const { data: ownerData, error: ownerError } = await query.maybeSingle();
 
     // ตรวจสอบว่าพบรายชื่อในฐานข้อมูลกองคลังหรือไม่
-    if (ownerError || !ownerData) {
+    // (ถ้ากรอกทั้งคู่แล้วไม่เจอ ลองหาแค่ชื่ออย่างเดียวตามเงื่อนไข 'นามสกุลไม่อยู่ในระบบให้เข้าได้')
+    let matchedOwnerData = ownerData;
+    if (!matchedOwnerData && lastName) {
+       const { data: retryData } = await supabaseAdmin
+        .from("owner")
+        .select("owner_id")
+        .eq("fname", firstName)
+        .limit(1)
+        .maybeSingle();
+       matchedOwnerData = retryData;
+    }
+
+    if (ownerError || !matchedOwnerData) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "ไม่พบข้อมูลชื่อ-นามสกุลนี้ในฐานข้อมูลกองคลัง กรุณาตรวจสอบความถูกต้อง",
+          error: "ไม่พบข้อมูลชื่อชุดนี้ในฐานข้อมูลกองคลัง กรุณาติดต่อเจ้าหน้าที่",
         },
         { status: 404 },
       );
     }
 
-    const matchedOwnerId = ownerData.owner_id;
+    const matchedOwnerId = matchedOwnerData.owner_id;
 
     // 2. ตรวจสอบว่ามีบัญชี LINE หรือชื่อนี้ถูกลงทะเบียนไปแล้วหรือยัง
     const { data: existingUser } = await supabaseAdmin

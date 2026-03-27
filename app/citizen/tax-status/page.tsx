@@ -196,9 +196,17 @@ function TaxStatusContent() {
             </h2>
           </div>
         </div>
-        <div className="bg-slate-50/80 backdrop-blur px-8 py-4 rounded-2xl border border-slate-100 text-center w-full md:w-auto relative z-10">
-          <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">ปีประเมิน</p>
-          <p className="text-2xl font-black text-indigo-600 tracking-tight">พ.ศ. {displayYear}</p>
+        <div className="flex flex-wrap items-center gap-4 md:gap-8 w-full md:w-auto relative z-10">
+          <div className="bg-slate-50/80 backdrop-blur px-6 py-4 rounded-2xl border border-slate-100 text-center flex-1 md:flex-initial">
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">จำนวนแปลงที่ดิน</p>
+            <p className="text-2xl font-black text-slate-800 tracking-tight">
+              {landPlots.length} <span className="text-sm font-bold text-slate-400">แปลง</span>
+            </p>
+          </div>
+          <div className="bg-slate-50/80 backdrop-blur px-8 py-4 rounded-2xl border border-slate-100 text-center flex-1 md:flex-initial">
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">ปีประเมิน</p>
+            <p className="text-2xl font-black text-indigo-600 tracking-tight">พ.ศ. {displayYear}</p>
+          </div>
         </div>
       </div>
 

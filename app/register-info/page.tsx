@@ -85,6 +85,13 @@ export default function RegisterInfoPage() {
   // จัดการเมื่อกดปุ่ม "บันทึกข้อมูล"
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // ตรวจสอบเลขบัตรประชาชน
+    if (!idCard || idCard.length !== 13) {
+      setErrorMessage("กรุณากรอกเลขประจำตัวประชาชนให้ครบ 13 หลัก");
+      return;
+    }
+
     setIsLoading(true);
 
     const res = await fetch("/api/register-user", {
@@ -289,8 +296,8 @@ export default function RegisterInfoPage() {
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                   เลขประจำตัวประชาชน 13 หลัก{" "}
-                  <span className="text-slate-400 font-normal lowercase">
-                    (ไม่บังคับ)
+                  <span className="text-rose-500 font-semibold lowercase">
+                    (จำเป็น)
                   </span>
                 </label>
                 <input

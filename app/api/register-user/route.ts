@@ -13,6 +13,14 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { lineUserId, prefix, firstName, lastName, idCard } = body;
 
+    // 0. ตรวจสอบว่ามีการกรอกเลขประจำตัวประชาชนมาหรือไม่
+    if (!idCard || idCard.length !== 13) {
+      return NextResponse.json(
+        { success: false, error: "กรุณาระบุเลขประจำตัวประชาชน 13 หลัก" },
+        { status: 400 },
+      );
+    }
+
     // 1. ค้นหา owner_id จากตาราง owner โดยเทียบ ชื่อ (และ นามสกุล ถ้ามีการกรอกมา)
     let query = supabaseAdmin
       .from("owner")

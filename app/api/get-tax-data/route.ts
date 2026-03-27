@@ -59,6 +59,7 @@ export async function GET(req: Request) {
     let landPlots: any[] = []; // เตรียมตัวแปรเก็บรายการแปลงที่ดิน
     let buildings: any[] = []; // เตรียมตัวแปรเก็บรายการสิ่งปลูกสร้าง
     let signboards: any[] = []; // เตรียมตัวแปรเก็บรายการป้าย
+    let totalLandPlotsAllYears = 0; // จำนวนแปลงที่ดินทั้งหมด (ทุกปี)
 
     if (searchYear) {
       // 2. ดึงข้อมูลภาษีจากตาราง pa
@@ -94,6 +95,7 @@ export async function GET(req: Request) {
 
       if (!landOwnerError && landOwnerData && landOwnerData.length > 0) {
         const lids = landOwnerData.map((item) => item.lid).filter(Boolean);
+        totalLandPlotsAllYears = lids.length;
 
         // สร้าง map จาก lid → line_no (จาก land_owner)
         const lineNoMap: Record<string, string> = {};
@@ -149,6 +151,7 @@ export async function GET(req: Request) {
       landPlots: landPlots,
       buildings: buildings,
       signboards: signboards, // เพิ่มข้อมูลป้าย
+      totalLandPlotsAllYears: totalLandPlotsAllYears, // จำนวนแปลงที่ดินทั้งหมด
       year: searchYear || "ไม่ระบุปี",
       availableYears: availableYears,
     });

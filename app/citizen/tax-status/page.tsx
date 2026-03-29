@@ -310,15 +310,13 @@ function TaxStatusContent() {
         </div>
       </div>
 
-      {/* Grid แบ่ง 2 ฝั่ง ซ้ายยอดภาษี ขวารายการแปลงที่ดิน */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* การ์ดยอดเงิน (ฝั่งซ้าย) */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col relative">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
-          <div className="p-8 flex-1 flex flex-col justify-center items-center text-center">
-            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 mb-6">
+      {/* รายการแปลงที่ดิน */}
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col mb-8">
+        <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <svg
-                className="w-8 h-8"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -327,51 +325,83 @@ function TaxStatusContent() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 ></path>
               </svg>
             </div>
-            <p className="text-slate-500 font-medium mb-2 text-lg">
-              ยอดภาษีที่ต้องชำระ
-            </p>
-            <h1 className="text-5xl lg:text-6xl font-black text-slate-800 tracking-tighter mb-8 flex items-start justify-center gap-1">
-              <span className="text-2xl text-slate-400 font-bold mt-2">฿</span>
-              {new Intl.NumberFormat("th-TH").format(taxAmount)}
-            </h1>
-
-            {taxAmount > 0 ? (
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rose-50 border border-rose-100 text-rose-600 font-semibold shadow-sm transition-all hover:bg-rose-100">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse relative"></span>
-                รอดำเนินการชำระเงิน
-              </div>
-            ) : (
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 font-semibold shadow-sm">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="3"
-                    d="M5 13l4 4L19 7"
-                  ></path>
-                </svg>
-                ไม่มียอดค้างชำระ
-              </div>
-            )}
-          </div>
+            รายการแปลงที่ดิน
+          </h3>
+          <span className="bg-slate-200 text-slate-600 text-xs font-bold px-3.5 py-1.5 rounded-full">
+            {landPlots.length} รายการ
+          </span>
         </div>
 
-        {/* การ์ดรายการแปลงที่ดิน (ฝั่งขวา) */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-          <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+        <div className="p-6 flex-1 overflow-y-auto max-h-[500px]">
+          {landPlots.length > 0 ? (
+            <ul className="space-y-4">
+              {landPlots.map((plot, index) => (
+                <li
+                  key={index}
+                  className="flex items-start gap-4 p-5 rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md hover:border-indigo-100 transition-all"
+                >
+                  <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm shrink-0">
+                    {String(index + 1).padStart(2, "0")}
+                  </div>
+                  <div className="flex-1 w-full relative">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-6">
+                      <div>
+                        <p className="text-[10px] md:text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">
+                          หมายเลขแปลง (ln)
+                        </p>
+                        <p className="font-bold text-slate-800 text-sm md:text-base">
+                          {plot.ln}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] md:text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">
+                          เลขเอกสารสิทธิ (dn)
+                        </p>
+                        <p className="font-medium text-slate-700 text-sm md:text-base">
+                          {plot.dn}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] md:text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">
+                          หน้าสำรวจ (sn)
+                        </p>
+                        <p className="font-medium text-slate-700 text-sm md:text-base">
+                          {plot.sn}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <Link
+                          href={`/citizen/tax-status/map?dn=${plot.dn}&ln=${plot.ln}`}
+                          className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] md:text-xs font-black transition-all shadow-lg shadow-indigo-100/50 hover:scale-105 active:scale-95 whitespace-nowrap"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                          </svg>
+                          เปิดแผนที่ดิจิทัล
+                        </Link>
+                      </div>
+                      <div className="col-span-2 lg:col-span-4 pt-2 border-t border-slate-50">
+                        <p className="text-[10px] md:text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">
+                          พื้นที่ตารางวา
+                        </p>
+                        <p className="font-medium text-slate-700 text-sm md:text-base">
+                          {plot.r} ไร่ {plot.y} งาน {plot.w} วา
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-slate-400 py-10">
+              <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mb-4">
                 <svg
-                  className="w-5 h-5"
+                  className="w-8 h-8 opacity-40 text-slate-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -380,114 +410,15 @@ function TaxStatusContent() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    d="M20 12H4M8 16l-4-4 4-4"
                   ></path>
                 </svg>
               </div>
-              รายการแปลงที่ดิน
-            </h3>
-            <span className="bg-slate-200 text-slate-600 text-xs font-bold px-3.5 py-1.5 rounded-full">
-              {landPlots.length} รายการ
-            </span>
-          </div>
-
-          <div className="p-6 flex-1 overflow-y-auto max-h-[400px]">
-            {landPlots.length > 0 ? (
-              <ul className="space-y-4">
-                {landPlots.map((plot, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start gap-4 p-5 rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md hover:border-indigo-100 transition-all"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm shrink-0">
-                      {String(index + 1).padStart(2, "0")}
-                    </div>
-                    <div className="flex-1 w-full relative">
-                      <div className="grid grid-cols-2 gap-y-4 gap-x-2">
-                        <div>
-                          <p className="text-[10px] md:text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">
-                            หมายเลขแปลง (ln)
-                          </p>
-                          <p className="font-bold text-slate-800 text-sm md:text-base">
-                            {plot.ln}
-                          </p>
-                        </div>
-                        <div>
-                          <div className="text-[10px] md:text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
-                            เลขเอกสารสิทธิ (dn)
-                            <div className="flex items-center">
-                              <Link
-                                href={`/citizen/tax-status/map?dn=${plot.dn}&ln=${plot.ln}`}
-                                className="text-indigo-600 hover:text-indigo-800 transition-colors"
-                                title="ดูแผนที่ดิจิทัล (OpenLayers)"
-                              >
-                                <span className="flex items-center gap-1 text-[10px] font-bold">
-                                  <svg
-                                    className="w-3 h-3"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth="2"
-                                      d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                                    ></path>
-                                  </svg>
-                                  ดูแผนที่
-                                </span>
-                              </Link>
-                            </div>
-                          </div>
-                          <p className="font-medium text-slate-700 text-sm md:text-base">
-                            {plot.dn}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] md:text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">
-                            หน้าสำรวจ (sn)
-                          </p>
-                          <p className="font-medium text-slate-700 text-sm md:text-base">
-                            {plot.sn}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] md:text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">
-                            พื้นที่ตารางวา
-                          </p>
-                          <p className="font-medium text-slate-700 text-sm md:text-base truncate">
-                            {plot.r} ไร่ {plot.y} งาน {plot.w} วา
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-slate-400 py-10">
-                <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mb-4">
-                  <svg
-                    className="w-8 h-8 opacity-40 text-slate-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M20 12H4M8 16l-4-4 4-4"
-                    ></path>
-                  </svg>
-                </div>
-                <p className="text-slate-500 font-medium">
-                  ไม่พบรายการแปลงที่ดินในปีนี้
-                </p>
-              </div>
-            )}
-          </div>
+              <p className="text-slate-500 font-medium">
+                ไม่พบรายการแปลงที่ดินในปีนี้
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

@@ -31,12 +31,11 @@ export default function LoginPage() {
 
         <div className="mt-8 text-sm text-gray-500 text-left bg-blue-50 p-4 rounded-lg border border-blue-100">
           <p className="font-semibold text-blue-700 mb-1">
-            ℹ️ สำหรับผู้ใช้งานครั้งแรก:
+            ℹ️ เข้าใช้งานได้อย่างง่ายดาย:
           </p>
           <p>
-            หลังจากเข้าสู่ระบบด้วย LINE แล้ว
-            ระบบจะให้ท่านกรอกเลขบัตรประจำตัวประชาชน 13 หลัก
-            เพื่อเชื่อมโยงข้อมูลภาษีของท่านเข้ากับบัญชี LINE
+            เพียงเข้าสู่ระบบด้วย LINE ท่านก็สามารถตรวจสอบข้อมูลภาษีที่ดิน
+            สิ่งปลูกสร้าง และป้าย ได้ทันทีผ่านระบบออนไลน์
           </p>
         </div>
       </div>

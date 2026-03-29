@@ -21,14 +21,7 @@ export default function RegisterInfoPage() {
   const [prefixOptions, setPrefixOptions] = useState<string[]>([]);
   const [isLoadingPrefixes, setIsLoadingPrefixes] = useState(true);
 
-  // --- State ใหม่สำหรับ Popup Error ข้อมูลซ้ำ ---
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // --- State ใหม่สำหรับ Popup เลือกปีประเมิน ---
-  const [showYearPopup, setShowYearPopup] = useState(false);
-  const [annualOptions, setAnnualOptions] = useState<string[]>([]);
-  const [selectedAnnual, setSelectedAnnual] = useState("");
-  const [isLoadingAnnuals, setIsLoadingAnnuals] = useState(false);
 
   // ดึงข้อมูลคำนำหน้า (ตอนโหลดหน้าเว็บ)
   useEffect(() => {
@@ -55,32 +48,6 @@ export default function RegisterInfoPage() {
     }
     fetchPrefixes();
   }, []);
-
-  // ฟังก์ชันดึงข้อมูลปีประเมินจากตาราง pa
-  const fetchAnnuals = async () => {
-    setIsLoadingAnnuals(true);
-    try {
-      const { data, error } = await supabase.from("pa").select("annual");
-      if (!error && data) {
-        // กรองค่าซ้ำ, ตัดช่องว่าง, และเรียงลำดับจากปีล่าสุดไปเก่าสุด
-        const uniqueAnnuals = Array.from(
-          new Set(
-            data
-              .filter((item) => item && item.annual)
-              .map((item) => String(item.annual).trim())
-              .filter((item) => item !== ""),
-          ),
-        ).sort((a, b) => Number(b) - Number(a)); // เรียงมากไปน้อย
-
-        setAnnualOptions(uniqueAnnuals);
-        if (uniqueAnnuals.length > 0) setSelectedAnnual(uniqueAnnuals[0]);
-      }
-    } catch (err) {
-      console.error("Error fetching annuals:", err);
-    } finally {
-      setIsLoadingAnnuals(false);
-    }
-  };
 
   // จัดการเมื่อกดปุ่ม "บันทึกข้อมูล"
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,20 +76,13 @@ export default function RegisterInfoPage() {
     const result = await res.json();
 
     if (result.success) {
-      // เมื่อบันทึกสำเร็จ ให้ดึงข้อมูลปีประเมิน และเปิด Popup แทนการเปลี่ยนหน้าทันที
-      await fetchAnnuals();
-      setShowYearPopup(true);
+      // เมื่อบันทึกสำเร็จ ให้เปลี่ยนไปหน้าค้นหาทันที
+      router.push("/citizen/search");
       setIsLoading(false);
     } else {
       setErrorMessage(result.error);
       setIsLoading(false);
     }
-  };
-
-  // จัดการเมื่อกดปุ่ม "ตกลง" ใน Popup
-  const handleConfirmYear = () => {
-    // ส่งปีที่เลือกแนบไปกับ URL ด้วย (Query Parameter) เพื่อให้หน้าต่อไปดึงข้อมูลถูกปี
-    router.push(`/citizen/tax-status?year=${selectedAnnual}`);
   };
 
   if (status === "loading")
@@ -331,80 +291,6 @@ export default function RegisterInfoPage() {
           </div>
         </div>
       </div>
-
-      {/* --- Popup เลือกปีประเมิน --- */}
-      {showYearPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm border border-slate-100">
-            <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-emerald-200">
-              <svg
-                className="w-8 h-8 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="3"
-                  d="M5 13l4 4L19 7"
-                ></path>
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-center text-slate-800 mb-1">
-              ลงทะเบียนสำเร็จ!
-            </h3>
-            <p className="text-center text-slate-500 mb-6 text-sm">
-              เลือกปีประเมินภาษีที่ต้องการตรวจสอบ
-            </p>
-
-            {isLoadingAnnuals ? (
-              <div className="w-full px-4 py-3 bg-slate-100 rounded-2xl text-center text-slate-500 animate-pulse mb-6">
-                กำลังโหลดปี...
-              </div>
-            ) : (
-              <div className="grid gap-2 mb-6">
-                {annualOptions.map((year, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedAnnual(year)}
-                    className={`w-full flex items-center justify-between px-5 py-3 rounded-2xl border-2 font-semibold text-sm transition-all ${
-                      selectedAnnual === year
-                        ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                        : "border-slate-100 bg-slate-50 text-slate-600 hover:border-slate-200"
-                    }`}
-                  >
-                    พ.ศ. {year}
-                    {selectedAnnual === year && (
-                      <svg
-                        className="w-4 h-4 text-indigo-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="3"
-                          d="M5 13l4 4L19 7"
-                        ></path>
-                      </svg>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <button
-              onClick={handleConfirmYear}
-              disabled={isLoadingAnnuals || !selectedAnnual}
-              className="w-full py-3.5 rounded-2xl text-white font-bold text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md shadow-indigo-200 transition-all disabled:opacity-50 disabled:shadow-none active:scale-[0.98]"
-            >
-              ดูข้อมูลภาษีของฉัน
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* --- Popup แจ้งเตือน Error --- */}
       {errorMessage && (

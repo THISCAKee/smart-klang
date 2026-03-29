@@ -18,14 +18,15 @@ export default function AuthRedirectPage() {
       return;
     }
 
-    // ตรวจสอบว่าลงทะเบียนแล้วหรือยัง
+    // เช็คสถานะการลงทะเบียนจาก session
     const isRegistered = (session?.user as any)?.isRegistered;
-    console.log("[AuthRedirect] isRegistered:", isRegistered, "session:", session);
 
-    if (isRegistered) {
-      router.replace("/citizen/select-year");
-    } else {
+    if (!isRegistered) {
+      // ถ้ายังไม่ลงทะเบียน ให้ไปหน้ายืนยันตัวตนก่อน
       router.replace("/register-info");
+    } else {
+      // ถ้าลงทะเบียนแล้ว ให้ไปหน้าที่รวมการค้นหาและเลือกปี
+      router.replace("/citizen/search");
     }
   }, [status, session, router]);
 

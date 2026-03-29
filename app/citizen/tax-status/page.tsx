@@ -13,7 +13,9 @@ function TaxStatusContent() {
 
   const yearFromUrl = searchParams.get("year");
   const [selectedYear, setSelectedYear] = useState<string>(yearFromUrl || "");
-  const [displayYear, setDisplayYear] = useState<string>(yearFromUrl || "กำลังโหลด...");
+  const [displayYear, setDisplayYear] = useState<string>(
+    yearFromUrl || "กำลังโหลด...",
+  );
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [showYearDropdown, setShowYearDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -21,7 +23,10 @@ function TaxStatusContent() {
   // ปิด Dropdown เมื่อคลิกนอกพื้นที่
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setShowYearDropdown(false);
       }
     }
@@ -38,15 +43,40 @@ function TaxStatusContent() {
 
   // เพิ่ม State สำหรับเก็บรายการแปลงที่ดิน และสิ่งปลูกสร้าง
   const [landPlots, setLandPlots] = useState<
-    { line_no: string; ln: string; dn: string; sn: string; r: string; y: string; w: string }[]
+    {
+      line_no: string;
+      ln: string;
+      dn: string;
+      sn: string;
+      r: string;
+      y: string;
+      w: string;
+    }[]
   >([]);
   const [buildings, setBuildings] = useState<
-    { address: string; moo: string; b_type: string; b_material: string; no_floor: number; all_area: number; notes: string; ref_lid: any }[]
+    {
+      address: string;
+      moo: string;
+      b_type: string;
+      b_material: string;
+      no_floor: number;
+      all_area: number;
+      notes: string;
+      ref_lid: any;
+    }[]
   >([]);
   const [signboards, setSignboards] = useState<
-    { s_name: string; s_desc: string; sign_type_id: string; sw: number; sl: number; no_side: number }[]
+    {
+      s_name: string;
+      s_desc: string;
+      sign_type_id: string;
+      sw: number;
+      sl: number;
+      no_side: number;
+    }[]
   >([]);
-  const [totalLandPlotsAllYears, setTotalLandPlotsAllYears] = useState<number>(0);
+  const [totalLandPlotsAllYears, setTotalLandPlotsAllYears] =
+    useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -59,8 +89,13 @@ function TaxStatusContent() {
 
       setIsLoading(true);
       try {
-        const url = selectedYear ? `/api/get-tax-data?year=${selectedYear}` : `/api/get-tax-data`;
-        const response = await fetch(url);
+        const queryParams = new URLSearchParams(searchParams.toString());
+        // ถ้ามีปีที่เลือกจาก dropdown ให้ทับค่าใน query string
+        if (selectedYear) {
+          queryParams.set("year", selectedYear);
+        }
+
+        const response = await fetch(`/api/get-tax-data?${queryParams.toString()}`);
         const result = await response.json();
 
         if (response.ok && result.success) {
@@ -89,7 +124,7 @@ function TaxStatusContent() {
     }
 
     fetchData();
-  }, [status, selectedYear, router]);
+  }, [status, selectedYear, router, searchParams]);
 
   if (status === "loading" || isLoading) {
     return (
@@ -108,16 +143,45 @@ function TaxStatusContent() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
-      {/* ปุ่มกลับหน้าหลัก */}
-      <div className="flex items-center">
-        <Link 
-          href="/" 
+      {/* ปุ่มกลับ */}
+      <div className="flex items-center gap-4">
+        <Link
+          href="/"
           className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-all font-medium text-sm bg-white hover:bg-slate-50 px-4 py-2 rounded-full border border-slate-200 shadow-sm"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.5"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            ></path>
           </svg>
           กลับหน้าหลัก
+        </Link>
+        <Link
+          href="/citizen/search"
+          className="inline-flex items-center gap-2 text-indigo-600 hover:text-white transition-all font-medium text-sm bg-white hover:bg-indigo-600 px-4 py-2 rounded-full border border-indigo-200 shadow-sm"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.5"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            ></path>
+          </svg>
+          ค้นหาใหม่
         </Link>
       </div>
 
@@ -128,15 +192,32 @@ function TaxStatusContent() {
             onClick={() => setShowYearDropdown((prev) => !prev)}
             className="inline-flex items-center gap-3 bg-white border border-slate-200 shadow-sm px-5 py-2.5 rounded-2xl text-slate-700 font-semibold text-sm hover:border-indigo-300 hover:text-indigo-600 transition-all"
           >
-            <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            <svg
+              className="w-4 h-4 text-indigo-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              ></path>
             </svg>
             ปีประเมิน: พ.ศ. {displayYear}
             <svg
-              className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${ showYearDropdown ? "rotate-180" : "" }`}
-              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${showYearDropdown ? "rotate-180" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                d="M19 9l-7 7-7-7"
+              ></path>
             </svg>
           </button>
 
@@ -157,8 +238,18 @@ function TaxStatusContent() {
                 >
                   พ.ศ. {year}
                   {displayYear === year && (
-                    <svg className="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+                    <svg
+                      className="w-4 h-4 text-indigo-500 shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="3"
+                        d="M5 13l4 4L19 7"
+                      ></path>
                     </svg>
                   )}
                 </button>
@@ -200,13 +291,20 @@ function TaxStatusContent() {
         </div>
         <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto relative z-10">
           <div className="bg-slate-50/80 backdrop-blur px-6 py-4 rounded-2xl border border-slate-100 text-center flex-1 md:flex-none">
-            <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1">ปีประเมิน</p>
-            <p className="text-xl font-black text-indigo-600 tracking-tight whitespace-nowrap">พ.ศ. {displayYear}</p>
+            <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1">
+              ปีประเมิน
+            </p>
+            <p className="text-xl font-black text-indigo-600 tracking-tight whitespace-nowrap">
+              พ.ศ. {displayYear}
+            </p>
           </div>
           <div className="bg-indigo-50/50 backdrop-blur px-6 py-4 rounded-2xl border border-indigo-100 text-center flex-1 md:flex-none">
-            <p className="text-[10px] text-indigo-500 font-semibold uppercase tracking-wider mb-1">แปลงที่ดินทั้งหมด</p>
+            <p className="text-[10px] text-indigo-500 font-semibold uppercase tracking-wider mb-1">
+              แปลงที่ดินในปี พ.ศ. {displayYear}
+            </p>
             <p className="text-xl font-black text-indigo-700 tracking-tight whitespace-nowrap">
-              {totalLandPlotsAllYears} <span className="text-sm font-bold">แปลง</span>
+              {totalLandPlotsAllYears}{" "}
+              <span className="text-sm font-bold">แปลง</span>
             </p>
           </div>
         </div>
@@ -240,7 +338,7 @@ function TaxStatusContent() {
               <span className="text-2xl text-slate-400 font-bold mt-2">฿</span>
               {new Intl.NumberFormat("th-TH").format(taxAmount)}
             </h1>
-            
+
             {taxAmount > 0 ? (
               <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rose-50 border border-rose-100 text-rose-600 font-semibold shadow-sm transition-all hover:bg-rose-100">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse relative"></span>
@@ -315,9 +413,33 @@ function TaxStatusContent() {
                           </p>
                         </div>
                         <div>
-                          <p className="text-[10px] md:text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">
+                          <div className="text-[10px] md:text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
                             เลขเอกสารสิทธิ (dn)
-                          </p>
+                            <div className="flex items-center">
+                              <Link
+                                href={`/citizen/tax-status/map?dn=${plot.dn}&ln=${plot.ln}`}
+                                className="text-indigo-600 hover:text-indigo-800 transition-colors"
+                                title="ดูแผนที่ดิจิทัล (OpenLayers)"
+                              >
+                                <span className="flex items-center gap-1 text-[10px] font-bold">
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                                    ></path>
+                                  </svg>
+                                  ดูแผนที่
+                                </span>
+                              </Link>
+                            </div>
+                          </div>
                           <p className="font-medium text-slate-700 text-sm md:text-base">
                             {plot.dn}
                           </p>
@@ -360,7 +482,9 @@ function TaxStatusContent() {
                     ></path>
                   </svg>
                 </div>
-                <p className="text-slate-500 font-medium">ไม่พบรายการแปลงที่ดินในปีนี้</p>
+                <p className="text-slate-500 font-medium">
+                  ไม่พบรายการแปลงที่ดินในปีนี้
+                </p>
               </div>
             )}
           </div>
@@ -372,8 +496,18 @@ function TaxStatusContent() {
         <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                ></path>
               </svg>
             </div>
             รายการสิ่งปลูกสร้าง
@@ -388,39 +522,82 @@ function TaxStatusContent() {
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="bg-slate-50/50">
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">บ้านเลขที่</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">หมู่</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">ประเภท (กรมธนารักษ์)</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">ลักษณะ</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center">ชั้น</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-right">เนื้อที่ (ตร.ม.)</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">หมายเหตุ</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    บ้านเลขที่
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    หมู่
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    ประเภท (กรมธนารักษ์)
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    ลักษณะ
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center">
+                    ชั้น
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-right">
+                    เนื้อที่ (ตร.ม.)
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    หมายเหตุ
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {buildings.map((b, i) => (
-                  <tr key={i} className="hover:bg-slate-50 transition-colors group">
-                    <td className="px-6 py-4 text-sm font-bold text-slate-800">{b.address || "-"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{b.moo || "-"}</td>
+                  <tr
+                    key={i}
+                    className="hover:bg-slate-50 transition-colors group"
+                  >
+                    <td className="px-6 py-4 text-sm font-bold text-slate-800">
+                      {b.address || "-"}
+                    </td>
                     <td className="px-6 py-4 text-sm text-slate-600">
-                      <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium">{b.b_type || "-"}</span>
+                      {b.moo || "-"}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{b.b_material || "-"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600 text-center">{b.no_floor || "1"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">
+                      <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium">
+                        {b.b_type || "-"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">
+                      {b.b_material || "-"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600 text-center">
+                      {b.no_floor || "1"}
+                    </td>
                     <td className="px-6 py-4 text-sm font-semibold text-indigo-600 text-right">
-                      {new Intl.NumberFormat("th-TH", { minimumFractionDigits: 2 }).format(b.all_area || 0)}
+                      {new Intl.NumberFormat("th-TH", {
+                        minimumFractionDigits: 2,
+                      }).format(b.all_area || 0)}
                     </td>
-                    <td className="px-6 py-4 text-xs text-slate-400 italic">{b.notes || "-"}</td>
+                    <td className="px-6 py-4 text-xs text-slate-400 italic">
+                      {b.notes || "-"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           ) : (
             <div className="py-12 flex flex-col items-center justify-center text-slate-400">
-              <svg className="w-12 h-12 mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+              <svg
+                className="w-12 h-12 mb-3 opacity-20"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                ></path>
               </svg>
-              <p className="text-sm font-medium">ไม่พบข้อมูลสิ่งปลูกสร้างในปีที่เลือก</p>
+              <p className="text-sm font-medium">
+                ไม่พบข้อมูลสิ่งปลูกสร้างในปีที่เลือก
+              </p>
             </div>
           )}
         </div>
@@ -431,8 +608,18 @@ function TaxStatusContent() {
         <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                ></path>
               </svg>
             </div>
             รายการป้าย (ภาษีป้าย)
@@ -447,18 +634,35 @@ function TaxStatusContent() {
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="bg-slate-50/50">
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">ชื่อกิจการ</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">ข้อความในป้าย</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center">ประเภทป้าย</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center">ขนาด (กว้าง x ยาว)</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center">จำนวนด้าน</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    ชื่อกิจการ
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    ข้อความในป้าย
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center">
+                    ประเภทป้าย
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center">
+                    ขนาด (กว้าง x ยาว)
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center">
+                    จำนวนด้าน
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {signboards.map((s, i) => (
-                  <tr key={i} className="hover:bg-slate-50 transition-colors group">
-                    <td className="px-6 py-4 text-sm font-bold text-slate-800">{s.s_name || "-"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600 leading-relaxed max-w-xs">{s.s_desc || "-"}</td>
+                  <tr
+                    key={i}
+                    className="hover:bg-slate-50 transition-colors group"
+                  >
+                    <td className="px-6 py-4 text-sm font-bold text-slate-800">
+                      {s.s_name || "-"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600 leading-relaxed max-w-xs">
+                      {s.s_desc || "-"}
+                    </td>
                     <td className="px-6 py-4 text-sm text-slate-600 text-center">
                       <span className="bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg text-xs font-semibold border border-amber-100">
                         ประเภท {s.sign_type_id || "-"}
@@ -478,8 +682,18 @@ function TaxStatusContent() {
             </table>
           ) : (
             <div className="py-12 flex flex-col items-center justify-center text-slate-400">
-              <svg className="w-12 h-12 mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+              <svg
+                className="w-12 h-12 mb-3 opacity-20"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                ></path>
               </svg>
               <p className="text-sm font-medium">ไม่พบข้อมูลป้ายในปีที่เลือก</p>
             </div>

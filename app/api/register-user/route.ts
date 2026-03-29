@@ -34,8 +34,7 @@ export async function POST(req: Request) {
 
     const { data: ownerData, error: ownerError } = await query.maybeSingle();
 
-    // ตรวจสอบว่าพบรายชื่อในฐานข้อมูลกองคลังหรือไม่
-    // (ถ้ากรอกทั้งคู่แล้วไม่เจอ ลองหาแค่ชื่ออย่างเดียวตามเงื่อนไข 'นามสกุลไม่อยู่ในระบบให้เข้าได้')
+    // ค้นหารายชื่อสำรอง ถ้าใส่ชื่อ+นามสกุลไม่เจอ ลองหาแค่ชื่อ
     let matchedOwnerData = ownerData;
     if (!matchedOwnerData && lastName) {
        const { data: retryData } = await supabaseAdmin
@@ -47,58 +46,80 @@ export async function POST(req: Request) {
        matchedOwnerData = retryData;
     }
 
-    if (ownerError || !matchedOwnerData) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "ไม่พบข้อมูลชื่อชุดนี้ในฐานข้อมูลกองคลัง กรุณาติดต่อเจ้าหน้าที่",
-        },
-        { status: 404 },
-      );
-    }
+    const matchedOwnerId = matchedOwnerData?.owner_id;
 
-    const matchedOwnerId = matchedOwnerData.owner_id;
-
-    // 2. ตรวจสอบว่ามีบัญชี LINE หรือชื่อนี้ถูกลงทะเบียนไปแล้วหรือยัง
-    const { data: existingUser } = await supabaseAdmin
+    // 2. ตรวจสอบว่ามีบัญชี LINE นี้ถูกลงทะเบียนไปแล้วหรือยัง
+    const { data: existingLineUser } = await supabaseAdmin
       .from("users")
       .select("id, line_user_id")
-      .or(`id.eq.${matchedOwnerId},line_user_id.eq.${lineUserId}`)
+      .eq("line_user_id", lineUserId)
       .maybeSingle();
 
-    if (existingUser) {
-      // ตรวจสอบว่าอะไรซ้ำ
-      const isOwnerDuplicate = existingUser.id === matchedOwnerId;
+    if (existingLineUser) {
       return NextResponse.json(
-        {
-          success: false,
-          error: isOwnerDuplicate
-            ? "ข้อมูลผู้เสียภาษีนี้ได้ทำการเชื่อมโยงกับบัญชี LINE ไปแล้ว"
-            : "บัญชี LINE นี้ได้ทำการลงทะเบียนไปแล้ว",
-        },
+        { success: false, error: "บัญชี LINE นี้ได้ทำการลงทะเบียนไปแล้ว" },
         { status: 400 },
       );
     }
 
-    // 2. ถ้าเจอ ให้บันทึกข้อมูลลงตาราง users พร้อมกับเอา owner_id มาใส่ในฟิลด์ id
-    const { data: insertData, error: insertError } = await supabaseAdmin
+    // ตรวจสอบว่าชื่อผู้เสียภาษีนี้ (ถ้าเจอในระบบ) ถูกเชื่อมโยงไปแล้วหรือยัง
+    if (matchedOwnerId) {
+      const { data: existingOwnerUser } = await supabaseAdmin
+        .from("users")
+        .select("id")
+        .eq("id", matchedOwnerId)
+        .maybeSingle();
+
+      if (existingOwnerUser) {
+        return NextResponse.json(
+          { success: false, error: "ข้อมูลผู้เสียภาษีนี้ได้ทำการเชื่อมโยงกับบัญชี LINE อื่นไปแล้ว" },
+          { status: 400 },
+        );
+      }
+    }
+
+    // 3. บันทึกข้อมูลลงตาราง users
+    const userData: any = {
+      line_user_id: lineUserId,
+      prefix: prefix,
+      first_name: firstName,
+      last_name: lastName,
+      id_card: idCard,
+    };
+
+    // ถ้าเจอเจ้าของในระบบ ให้ใช้ ID เดียวกัน (เพื่อ Join ข้อมูลภาษีได้)
+    if (matchedOwnerId) {
+      userData.id = matchedOwnerId;
+    } else {
+      // ✅ กรณีไม่เจอในระบบกองคลัง (ใครก็ได้)
+      // ต้องสร้าง ID ใหม่ให้โดยไม่ให้ซ้ำกับที่มีอยู่
+      try {
+        const { data: maxIdRow } = await supabaseAdmin
+          .from("users")
+          .select("id")
+          .order("id", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        // ถ้ามีข้อมูลในตารางแล้ว ให้ใช้ตัวที่มากที่สุด + 1 
+        // เริ่มต้นที่ 900000 เพื่อไม่ให้ไปทับกับช่วง owner_id ปกติ
+        const maxId = maxIdRow ? Number(maxIdRow.id) : 900000;
+        userData.id = maxId + 1;
+      } catch (e) {
+        // Fallback กรณีหา Max ไม่ได้ (อาจจะตารางว่าง)
+        userData.id = Date.now(); // ใช้ Timestamp เป็น ID ชั่วคราว (ถ้า type เป็น bigint)
+      }
+    }
+
+    const { error: insertError } = await supabaseAdmin
       .from("users")
-      .insert([
-        {
-          id: matchedOwnerId, // บังคับใส่ ID ให้ตรงกับตาราง owner
-          line_user_id: lineUserId,
-          prefix: prefix,
-          first_name: firstName,
-          last_name: lastName,
-          id_card: idCard,
-        },
-      ]);
+      .insert([userData]);
 
     if (insertError) throw insertError;
 
     return NextResponse.json({
       success: true,
-      message: "ลงทะเบียนและเชื่อมโยงข้อมูลสำเร็จ",
+      message: "ลงทะเบียนสำเร็จ",
     });
   } catch (error: any) {
     console.error("Error saving user:", error);

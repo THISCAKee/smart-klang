@@ -16,15 +16,16 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: true, suggestions: [] });
     }
 
-    let query = supabaseAdmin.from("owner").select("*");
+    let query = supabaseAdmin.from("owner").select("owner_id, fname, lname, pop_id");
 
     if (type === "idCard") {
       query = query.ilike("pop_id", `${q}%`);
     } else {
-      query = query.or(`fname.ilike.${q}%,lname.ilike.${q}%`);
+      // ค้นหาแบบยืดหยุ่นมากขึ้น (มีคำนั้นอยู่ในชื่อหรือนามสกุล)
+      query = query.or(`fname.ilike.%${q}%,lname.ilike.%${q}%`);
     }
 
-    const { data, error } = await query.limit(10);
+    const { data, error } = await query.limit(20);
 
     if (error) throw error;
 

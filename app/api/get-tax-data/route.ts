@@ -88,6 +88,7 @@ export async function GET(req: Request) {
     let buildings: any[] = [];
     let signboards: any[] = [];
     let taxSummary: any = null;
+    let signSummary: any = null;
     let totalLandPlotsAllYears = 0;
 
     // ดึงรายการปีประเมินทั้งหมดในระบบ (ไม่กรอง owner_id เพื่อให้เห็นทุกปี)
@@ -166,6 +167,32 @@ export async function GET(req: Request) {
           }
         } catch (err: any) {
             console.log("❌ tax_data lookup fail:", err.message);
+        }
+
+        signSummary = null;
+        try {
+          const { data: signMatches } = await supabaseAdmin
+            .from("sign_tax")
+            .select("*")
+            .or(`owner_name.ilike.%${user.first_name}%,owner_name.ilike.%${user.last_name}%`)
+            .eq("fiscal_year", String(searchYear));
+          
+          if (signMatches && signMatches.length > 0) {
+            const actualSignMatches = signMatches.filter(r => 
+                r.owner_name.includes(user.first_name) && 
+                (user.last_name ? r.owner_name.includes(user.last_name) : true)
+            );
+            
+            if (actualSignMatches.length > 0) {
+               signSummary = actualSignMatches.reduce((acc, curr) => ({
+                  tax_assessed: (acc.tax_assessed || 0) + (Number(curr.tax_assessed) || 0),
+                  tax_paid: (acc.tax_paid || 0) + (Number(curr.tax_paid) || 0),
+                  tax_due: (acc.tax_due || 0) + (Number(curr.tax_due) || 0),
+               }), { tax_assessed: 0, tax_paid: 0, tax_due: 0 } as any);
+            }
+          }
+        } catch (err: any) {
+            console.log("❌ sign_tax lookup fail:", err.message);
         }
 
         // ดึงข้อมูลป้าย (signboard) กรองตามเจ้าของและปี
@@ -251,6 +278,7 @@ export async function GET(req: Request) {
       buildings: buildings,
       signboards: signboards,
       taxSummary: taxSummary || null,
+      signSummary: signSummary || null,
       totalLandPlotsAllYears: totalLandPlotsAllYears,
       year: searchYear || "ไม่ระบุปี",
       availableYears: availableYears,

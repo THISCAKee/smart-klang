@@ -12,6 +12,11 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8 text-center">
+        <img
+          src="/logo_sk.png"
+          alt="Smart Klang Logo"
+          className="w-20 h-20 object-contain mx-auto mb-4"
+        />
         <h2 className="text-2xl font-bold text-blue-800 mb-2">
           ระบบ Smart Klang
         </h2>

@@ -35,15 +35,14 @@ export default function AdminLoginPage() {
     <main className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl p-8">
         <div className="mb-8">
-          <div className="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black mb-4">
-            SK
-          </div>
-          <h1 className="text-2xl font-black text-slate-900">
-            Admin Dashboard
+          <img
+            src="/logo_sk.png"
+            alt="Smart Klang Logo"
+            className="w-16 h-16 object-contain mb-4 mx-auto"
+          />
+          <h1 className="text-lg text-slate-500 mt-1 flex items-center justify-center font-bold">
+            เข้าสู่ระบบสำหรับเจ้าหน้าที่เทศบาลตำบลเวียงยอง
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            เข้าสู่ระบบสำหรับเจ้าหน้าที่เทศบาล
-          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">

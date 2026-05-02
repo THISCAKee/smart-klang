@@ -95,14 +95,21 @@ export default function AdminDashboardPage() {
     <main className="min-h-screen bg-slate-100 text-slate-900">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-indigo-600">
-              Smart Klang Admin
-            </p>
-            <h1 className="text-2xl font-black">User Activity Dashboard</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              {adminEmail || "กำลังตรวจสอบสิทธิ์เจ้าหน้าที่"}
-            </p>
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo_sk.png"
+              alt="Logo"
+              className="w-12 h-12 object-contain"
+            />
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-indigo-600">
+                Smart Klang Admin
+              </p>
+              <h1 className="text-2xl font-black">User Activity Dashboard</h1>
+              <p className="text-sm text-slate-500 mt-1">
+                {adminEmail || "กำลังตรวจสอบสิทธิ์เจ้าหน้าที่"}
+              </p>
+            </div>
           </div>
           <div className="flex gap-3">
             <button

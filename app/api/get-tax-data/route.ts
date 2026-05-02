@@ -9,10 +9,75 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE as string,
 );
 
+interface OwnerRow {
+  owner_id: string;
+  prefix?: string | null;
+  fname: string;
+  lname?: string | null;
+}
+
+interface UserLinkRow {
+  id: string;
+}
+
+interface YearRow {
+  annual: string | number | null;
+}
+
+interface TaxSummaryRow {
+  fiscal_year?: string | number | null;
+  owner_name: string;
+  tax_assessed?: number | string | null;
+  tax_paid?: number | string | null;
+  tax_due?: number | string | null;
+}
+
+interface TaxSummary {
+  fiscal_year?: string | number | null;
+  owner_name?: string;
+  tax_assessed: number;
+  tax_paid: number;
+  tax_due: number;
+}
+
+interface LandPlot {
+  line_no: string;
+  ln: string;
+  dn: string;
+  sn: string;
+  r: string;
+  y: string;
+  w: string;
+}
+
+interface BuildingRow {
+  address: string | null;
+  moo: string | null;
+  b_type: string | null;
+  b_material: string | null;
+  no_floor: number | null;
+  all_area: number | null;
+  notes: string | null;
+  ref_lid: string | number | null;
+}
+
+interface SignboardRow {
+  s_name: string | null;
+  s_desc: string | null;
+  sign_type_id: string | number | null;
+  sw: number | null;
+  sl: number | null;
+  no_side: number | null;
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unknown error";
+}
+
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user || !(session.user as any).id) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -24,7 +89,7 @@ export async function GET(req: Request) {
     const searchOwnerId = searchParams.get("ownerId");
 
     // 1. ดึงข้อมูล User/Owner
-    let owner = null;
+    let owner: OwnerRow | null = null;
 
     if (searchOwnerId) {
       // ค้นหาดรูรหัสเจ้าของโดยตรง
@@ -33,7 +98,7 @@ export async function GET(req: Request) {
         .select("*")
         .eq("owner_id", searchOwnerId)
         .maybeSingle();
-      owner = data;
+      owner = data as OwnerRow | null;
     } else if (searchIdCard) {
       // ค้นหาตามเลขบัตรประชาชน (ใช้ pop_id ตามคลัง)
       const { data } = await supabaseAdmin
@@ -41,7 +106,7 @@ export async function GET(req: Request) {
         .select("*")
         .eq("pop_id", searchIdCard)
         .maybeSingle();
-      owner = data;
+      owner = data as OwnerRow | null;
     } else if (searchFirstName) {
       // ค้นหาตามชื่อจากตาราง owner
       let query = supabaseAdmin
@@ -54,22 +119,22 @@ export async function GET(req: Request) {
       }
       
       const { data } = await query.maybeSingle();
-      owner = data;
+      owner = data as OwnerRow | null;
     } else {
       // Default: ดึงข้อมูลตาม LINE User ID จากตาราง users เชื่อมไปตาราง owner
       const { data: userLink } = await supabaseAdmin
         .from("users")
         .select("id")
-        .eq("line_user_id", (session.user as any).id)
+        .eq("line_user_id", session.user.id)
         .maybeSingle();
       
       if (userLink) {
         const { data } = await supabaseAdmin
           .from("owner")
           .select("*")
-          .eq("owner_id", userLink.id)
+          .eq("owner_id", (userLink as UserLinkRow).id)
           .maybeSingle();
-        owner = data;
+        owner = data as OwnerRow | null;
       }
     }
 
@@ -84,18 +149,22 @@ export async function GET(req: Request) {
     let searchYear = year;
     let availableYears: string[] = [];
     let taxAmount = 0;
-    let landPlots: any[] = [];
-    let buildings: any[] = [];
-    let signboards: any[] = [];
-    let taxSummary: any = null;
-    let signSummary: any = null;
+    let landPlots: LandPlot[] = [];
+    let buildings: BuildingRow[] = [];
+    let signboards: SignboardRow[] = [];
+    let taxSummary: TaxSummary | null = null;
+    let signSummary: TaxSummary | null = null;
     let totalLandPlotsAllYears = 0;
 
     // ดึงรายการปีประเมินทั้งหมดในระบบ (ไม่กรอง owner_id เพื่อให้เห็นทุกปี)
     const { data: yearRows } = await supabaseAdmin.from("pa").select("annual");
     if (yearRows) {
       availableYears = Array.from(
-        new Set(yearRows.map((r: any) => String(r.annual)).filter(Boolean)),
+        new Set(
+          (yearRows as YearRow[])
+            .map((r) => String(r.annual))
+            .filter(Boolean),
+        ),
       ).sort((a, b) => Number(b) - Number(a));
     }
 
@@ -132,11 +201,6 @@ export async function GET(req: Request) {
 
         taxSummary = null;
         try {
-          const fullName = `${user.prefix}${user.first_name} ${user.last_name}`.trim();
-          const simpleName = `${user.first_name} ${user.last_name}`.trim();
-          
-          console.log(`🔍 DEBUG: Searching tax_data for: ${fullName} or ${simpleName}, Year: ${searchYear}`);
-          
           const { data: summaryMatches } = await supabaseAdmin
             .from("tax_data")
             .select("*")
@@ -145,14 +209,12 @@ export async function GET(req: Request) {
           
           if (summaryMatches && summaryMatches.length > 0) {
             // คัดกรองเฉพาะคนที่มีชื่อและนามสกุลตรงกันจริงๆ (กรณีในตารางมีคนอื่นปนมาจากการ ilike)
-            const actualMatches = summaryMatches.filter(r => 
+            const actualMatches = (summaryMatches as TaxSummaryRow[]).filter((r) => 
                 r.owner_name.includes(user.first_name) && 
                 (user.last_name ? r.owner_name.includes(user.last_name) : true)
             );
             
             if (actualMatches.length > 0) {
-               console.log(`✅ Found ${actualMatches.length} matching records in tax_data. Summing values...`);
-               
                // รวมยอดทั้งหมดเข้าด้วยกัน
                const aggregated = actualMatches.reduce((acc, curr) => ({
                   fiscal_year: curr.fiscal_year, // ใช้ปีของรายการแรก
@@ -160,13 +222,13 @@ export async function GET(req: Request) {
                   tax_assessed: (acc.tax_assessed || 0) + (Number(curr.tax_assessed) || 0),
                   tax_paid: (acc.tax_paid || 0) + (Number(curr.tax_paid) || 0),
                   tax_due: (acc.tax_due || 0) + (Number(curr.tax_due) || 0),
-               }), { tax_assessed: 0, tax_paid: 0, tax_due: 0 } as any);
+               }), { tax_assessed: 0, tax_paid: 0, tax_due: 0 } as TaxSummary);
                
                taxSummary = aggregated;
             }
           }
-        } catch (err: any) {
-            console.log("❌ tax_data lookup fail:", err.message);
+        } catch (err: unknown) {
+            console.error("tax_data lookup failed:", getErrorMessage(err));
         }
 
         signSummary = null;
@@ -178,7 +240,7 @@ export async function GET(req: Request) {
             .eq("fiscal_year", String(searchYear));
           
           if (signMatches && signMatches.length > 0) {
-            const actualSignMatches = signMatches.filter(r => 
+            const actualSignMatches = (signMatches as TaxSummaryRow[]).filter((r) => 
                 r.owner_name.includes(user.first_name) && 
                 (user.last_name ? r.owner_name.includes(user.last_name) : true)
             );
@@ -188,11 +250,11 @@ export async function GET(req: Request) {
                   tax_assessed: (acc.tax_assessed || 0) + (Number(curr.tax_assessed) || 0),
                   tax_paid: (acc.tax_paid || 0) + (Number(curr.tax_paid) || 0),
                   tax_due: (acc.tax_due || 0) + (Number(curr.tax_due) || 0),
-               }), { tax_assessed: 0, tax_paid: 0, tax_due: 0 } as any);
+               }), { tax_assessed: 0, tax_paid: 0, tax_due: 0 } as TaxSummary);
             }
           }
-        } catch (err: any) {
-            console.log("❌ sign_tax lookup fail:", err.message);
+        } catch (err: unknown) {
+            console.error("sign_tax lookup failed:", getErrorMessage(err));
         }
 
         // ดึงข้อมูลป้าย (signboard) กรองตามเจ้าของและปี
@@ -203,7 +265,7 @@ export async function GET(req: Request) {
           .eq("annual", searchYear);
 
         if (signData) {
-          signboards = signData;
+          signboards = signData as SignboardRow[];
         }
 
         // 3. ดึง lid ทั้งหมดจาก land_owner ของ owner นี้
@@ -256,7 +318,7 @@ export async function GET(req: Request) {
                   .in("ref_lid", activeLids);
 
                 if (buildingData) {
-                  buildings = buildingData;
+                  buildings = buildingData as BuildingRow[];
                 }
               }
             }
@@ -270,7 +332,7 @@ export async function GET(req: Request) {
       success: true,
       userData: {
         prefix: user?.prefix || "",
-        firstName: user?.first_name || (session.user as any).name || "ผู้ใช้งาน",
+        firstName: user?.first_name || session.user.name || "ผู้ใช้งาน",
         lastName: user?.last_name || "",
       },
       taxAmount: taxAmount,
@@ -283,7 +345,7 @@ export async function GET(req: Request) {
       year: searchYear || "ไม่ระบุปี",
       availableYears: availableYears,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Server error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },

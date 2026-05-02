@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 function TaxStatusContent() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -39,8 +39,6 @@ function TaxStatusContent() {
     firstName: string;
     lastName: string;
   } | null>(null);
-  const [taxAmount, setTaxAmount] = useState<number>(0);
-
   // เพิ่ม State สำหรับเก็บรายการแปลงที่ดิน และสิ่งปลูกสร้าง
   const [landPlots, setLandPlots] = useState<
     {
@@ -62,7 +60,7 @@ function TaxStatusContent() {
       no_floor: number;
       all_area: number;
       notes: string;
-      ref_lid: any;
+      ref_lid: string | number | null;
     }[]
   >([]);
   const [signboards, setSignboards] = useState<
@@ -100,7 +98,6 @@ function TaxStatusContent() {
 
         if (response.ok && result.success) {
           setUserData(result.userData);
-          setTaxAmount(result.taxAmount);
           setLandPlots(result.landPlots || []);
           setBuildings(result.buildings || []);
           setSignboards(result.signboards || []);

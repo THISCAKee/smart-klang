@@ -2,6 +2,7 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import LineProvider from "next-auth/providers/line";
 import { createClient } from "@supabase/supabase-js";
+import { logActivity } from "@/lib/activity-log";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE;
@@ -12,7 +13,7 @@ const supabaseAdmin =
     : null;
 
 export const authOptions: NextAuthOptions = {
-  debug: true,
+  debug: process.env.NODE_ENV !== "production",
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
     LineProvider({
@@ -44,14 +45,22 @@ export const authOptions: NextAuthOptions = {
             .eq("line_user_id", user.id)
             .maybeSingle();
 
-          console.log("[NextAuth] signIn check:", { lineId: user.id, data, error });
-
           // เก็บสถานะว่าลงทะเบียนแล้วหรือยังไว้ที่ user object
           // เพื่อส่งต่อไป jwt callback
-          (user as any).isRegistered = !!(data && !error);
+          user.isRegistered = !!(data && !error);
+
+          await logActivity({
+            event_type: "line_login",
+            line_user_id: user.id,
+            line_display_name: user.name,
+            metadata: {
+              provider: account.provider,
+              isRegistered: user.isRegistered,
+            },
+          });
         } catch (err) {
           console.error("[NextAuth] SignIn Error:", err);
-          (user as any).isRegistered = false;
+          user.isRegistered = false;
         }
       }
       // ✅ return true เสมอ เพื่อให้ session ถูกสร้าง
@@ -62,15 +71,15 @@ export const authOptions: NextAuthOptions = {
       if (account) {
         token.provider = account.provider;
         // รับค่า isRegistered จาก signIn callback
-        token.isRegistered = (user as any)?.isRegistered ?? false;
+        token.isRegistered = user?.isRegistered ?? false;
       }
       return token;
     },
 
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.sub as string;
-        (session.user as any).isRegistered = token.isRegistered ?? false;
+        session.user.id = token.sub as string;
+        session.user.isRegistered = token.isRegistered ?? false;
       }
       return session;
     },

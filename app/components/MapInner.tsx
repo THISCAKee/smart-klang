@@ -12,10 +12,12 @@ import GeoJSONFormat from "ol/format/GeoJSON";
 import { Style, Fill, Stroke } from "ol/style";
 import { fromLonLat } from "ol/proj";
 
+type GeoJsonData = Record<string, unknown>;
+
 interface MapInnerProps {
   center?: [number, number]; // [lat, lng]
   zoom?: number;
-  geojsonData?: any;
+  geojsonData?: GeoJsonData;
   title?: string;
   description?: string;
 }
@@ -101,7 +103,7 @@ export default function MapInner({
             mapInstanceRef.current.getView().fit(extent, {
               padding: [50, 50, 50, 50],
               duration: 800,
-              maxZoom: 20
+              maxZoom: 20,
             });
           }
         }

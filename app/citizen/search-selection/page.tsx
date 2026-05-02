@@ -5,13 +5,18 @@ import { useSession } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
+interface UserData {
+  firstName: string;
+  lastName: string;
+}
+
 function SearchSelectionContent() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(true);
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [displayYear, setDisplayYear] = useState<string>("");
 
   useEffect(() => {

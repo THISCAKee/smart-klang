@@ -6,6 +6,17 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE!
 );
 
+interface OwnerSuggestionRow {
+  owner_id: string;
+  fname: string;
+  lname: string | null;
+  pop_id: string | null;
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unknown error";
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -29,7 +40,7 @@ export async function GET(req: Request) {
 
     if (error) throw error;
 
-    const suggestions = (data || []).map((item: any) => ({
+    const suggestions = ((data || []) as OwnerSuggestionRow[]).map((item) => ({
       owner_id: item.owner_id,
       fname: item.fname,
       lname: item.lname,
@@ -40,8 +51,8 @@ export async function GET(req: Request) {
       success: true,
       suggestions: suggestions,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Suggestion error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: getErrorMessage(error) }, { status: 500 });
   }
 }

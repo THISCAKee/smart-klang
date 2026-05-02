@@ -5,15 +5,28 @@ import { useSession } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
+interface UserData {
+  prefix: string;
+  firstName: string;
+  lastName: string;
+}
+
+interface TaxSummary {
+  owner_name?: string;
+  tax_assessed?: number | string | null;
+  tax_paid?: number | string | null;
+  tax_due?: number | string | null;
+}
+
 function TaxSummaryContent() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [taxAmount, setTaxAmount] = useState<number>(0);
-  const [taxSummary, setTaxSummary] = useState<any>(null);
-  const [signSummary, setSignSummary] = useState<any>(null);
+  const [taxSummary, setTaxSummary] = useState<TaxSummary | null>(null);
+  const [signSummary, setSignSummary] = useState<TaxSummary | null>(null);
   const [displayYear, setDisplayYear] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
 

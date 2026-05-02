@@ -19,7 +19,7 @@ export default function AuthRedirectPage() {
     }
 
     // เช็คสถานะการลงทะเบียนจาก session
-    const isRegistered = (session?.user as any)?.isRegistered;
+    const isRegistered = session?.user?.isRegistered;
 
     if (!isRegistered) {
       // ถ้ายังไม่ลงทะเบียน ให้ไปหน้ายืนยันตัวตนก่อน

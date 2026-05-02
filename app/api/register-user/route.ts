@@ -8,10 +8,38 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE!,
 );
 
+interface RegisterUserBody {
+  lineUserId?: string;
+  prefix?: string;
+  firstName?: string;
+  lastName?: string;
+  idCard?: string;
+}
+
+interface UserInsertData {
+  id?: number | string;
+  line_user_id: string;
+  prefix?: string;
+  first_name: string;
+  last_name?: string;
+  id_card: string;
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unknown error";
+}
+
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = (await req.json()) as RegisterUserBody;
     const { lineUserId, prefix, firstName, lastName, idCard } = body;
+
+    if (!lineUserId || !firstName) {
+      return NextResponse.json(
+        { success: false, error: "ข้อมูลลงทะเบียนไม่ครบถ้วน" },
+        { status: 400 },
+      );
+    }
 
     // 0. ตรวจสอบว่ามีการกรอกเลขประจำตัวประชาชนมาหรือไม่
     if (!idCard || idCard.length !== 13) {
@@ -32,7 +60,7 @@ export async function POST(req: Request) {
       query = query.eq("lname", lastName);
     }
 
-    const { data: ownerData, error: ownerError } = await query.maybeSingle();
+    const { data: ownerData } = await query.maybeSingle();
 
     // ค้นหารายชื่อสำรอง ถ้าใส่ชื่อ+นามสกุลไม่เจอ ลองหาแค่ชื่อ
     let matchedOwnerData = ownerData;
@@ -79,7 +107,7 @@ export async function POST(req: Request) {
     }
 
     // 3. บันทึกข้อมูลลงตาราง users
-    const userData: any = {
+    const userData: UserInsertData = {
       line_user_id: lineUserId,
       prefix: prefix,
       first_name: firstName,
@@ -105,7 +133,7 @@ export async function POST(req: Request) {
         // เริ่มต้นที่ 900000 เพื่อไม่ให้ไปทับกับช่วง owner_id ปกติ
         const maxId = maxIdRow ? Number(maxIdRow.id) : 900000;
         userData.id = maxId + 1;
-      } catch (e) {
+      } catch {
         // Fallback กรณีหา Max ไม่ได้ (อาจจะตารางว่าง)
         userData.id = Date.now(); // ใช้ Timestamp เป็น ID ชั่วคราว (ถ้า type เป็น bigint)
       }
@@ -121,10 +149,10 @@ export async function POST(req: Request) {
       success: true,
       message: "ลงทะเบียนสำเร็จ",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error saving user:", error);
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: getErrorMessage(error) },
       { status: 500 },
     );
   }

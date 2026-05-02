@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 interface OwnerSuggestion {
@@ -13,9 +13,8 @@ interface OwnerSuggestion {
 }
 
 function SearchContent() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   // State สำหรับค้นหา
   const [searchType, setSearchType] = useState<"idCard" | "name">("name");
@@ -27,7 +26,7 @@ function SearchContent() {
   // Suggestions state
   const [suggestions, setSuggestions] = useState<OwnerSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [, setIsSuggesting] = useState(false);
   const suggestionRef = useRef<HTMLDivElement>(null);
 
   // Year state
@@ -83,11 +82,9 @@ function SearchContent() {
       try {
         const res = await fetch(`/api/suggest-owners?type=${searchType}&q=${encodeURIComponent(q)}`);
         const result = await res.json();
-        console.log("DEBUG: Suggestions fetch result:", result);
         if (result.success) {
           setSuggestions(result.suggestions);
           setShowSuggestions(result.suggestions.length > 0);
-          console.log("DEBUG: Setting showSuggestions to:", result.suggestions.length > 0);
         }
       } catch (err) {
         console.error("Suggest error:", err);
@@ -125,15 +122,17 @@ function SearchContent() {
     setShowSuggestions(false);
   };
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAnnual) return;
 
-    let queryParams = new URLSearchParams();
+    const queryParams = new URLSearchParams();
     queryParams.set("year", selectedAnnual);
+    let searchQuery = "";
 
     if (selectedOwnerId) {
       queryParams.set("ownerId", selectedOwnerId);
+      searchQuery = `${firstName} ${lastName}`.trim() || selectedOwnerId;
     } else {
       if (searchType === "idCard") {
         if (!idCard) {
@@ -141,6 +140,7 @@ function SearchContent() {
             return;
         }
         queryParams.set("idCard", idCard);
+        searchQuery = idCard;
       } else {
         if (!firstName) {
           alert("กรุณากรอกชื่อ");
@@ -148,7 +148,25 @@ function SearchContent() {
         }
         queryParams.set("firstName", firstName);
         if (lastName) queryParams.set("lastName", lastName);
+        searchQuery = `${firstName} ${lastName}`.trim();
       }
+    }
+
+    try {
+      await fetch("/api/activity-logs/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          searchType,
+          query: searchQuery,
+          year: selectedAnnual,
+          ownerId: selectedOwnerId,
+          firstName,
+          lastName,
+        }),
+      });
+    } catch (error) {
+      console.error("Search activity log failed:", error);
     }
 
     router.push(`/citizen/search-selection?${queryParams.toString()}`);

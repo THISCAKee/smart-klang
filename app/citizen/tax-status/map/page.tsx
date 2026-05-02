@@ -1,10 +1,22 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 // โหลดข้อมูลแผนที่
+
+interface GeoJsonFeature {
+  properties?: {
+    _dn?: string | number;
+    dn?: string | number;
+  };
+}
+
+interface GeoJsonData {
+  features?: GeoJsonFeature[];
+  [key: string]: unknown;
+}
 
 const WebMap = dynamic(() => import("@/app/components/WebMap"), {
   ssr: false,
@@ -17,11 +29,10 @@ const WebMap = dynamic(() => import("@/app/components/WebMap"), {
 
 function MapContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const dn = searchParams.get("dn");
   const ln = searchParams.get("ln");
-  const [geojsonData, setGeojsonData] = useState<any>(null);
-  const [loadingGeoJSON, setLoadingGeoJSON] = useState(false);
+  const [geojsonData, setGeojsonData] = useState<GeoJsonData | null>(null);
+  const [, setLoadingGeoJSON] = useState(false);
 
   // ดึง GeoJSON จากลิงก์ที่คุณระบุ
   useEffect(() => {
@@ -33,12 +44,11 @@ function MapContent() {
         const res = await fetch(url);
         
         if (res.ok) {
-          const fullData = await res.json();
-          console.log("Full GeoJSON fetched:", fullData);
+          const fullData = (await res.json()) as GeoJsonData;
 
           // กรองข้อมูลเฉพาะแปลงที่ตรงกับ dn ปัจจุบัน
           if (fullData.features) {
-            const filteredFeatures = fullData.features.filter((f: any) => 
+            const filteredFeatures = fullData.features.filter((f) => 
                String(f.properties?._dn) === String(dn) || String(f.properties?.dn) === String(dn)
             );
 
@@ -47,9 +57,6 @@ function MapContent() {
                 ...fullData,
                 features: filteredFeatures
               });
-              console.log("Matched feature found for dn:", dn);
-            } else {
-              console.log("No matching feature found for dn:", dn);
             }
           }
         }
@@ -139,7 +146,7 @@ function MapContent() {
           <WebMap
             title={`โฉนดเลขที่ ${dn}`}
             description={ln ? `หมายเลขแปลง: ${ln}` : "ข้อมูลแผนที่ภูมิศาสตร์"}
-            geojsonData={geojsonData}
+            geojsonData={geojsonData ?? undefined}
           />
         </div>
 

@@ -2,7 +2,6 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import Image from "next/image";
 
 export default function LoginPage() {
   const handleLineLogin = () => {

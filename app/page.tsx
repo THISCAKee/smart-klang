@@ -16,7 +16,7 @@ export default function HomePage() {
           </div>
           <div>
             <Link
-              href="/login"
+              href="/admin/login"
               className="text-sm font-medium text-slate-600 hover:text-blue-600 transition"
             >
               สำหรับเจ้าหน้าที่
